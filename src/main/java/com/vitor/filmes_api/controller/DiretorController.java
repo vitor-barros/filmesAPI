@@ -1,5 +1,6 @@
 package com.vitor.filmes_api.controller;
 
+import com.vitor.filmes_api.dto.DiretorDTO;
 import com.vitor.filmes_api.model.Diretor;
 import com.vitor.filmes_api.service.DiretorService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +30,13 @@ public class DiretorController {
     }
 
     @PostMapping
-    public Diretor criar(@RequestBody Diretor diretor) {
+    public Diretor criar(@RequestBody DiretorDTO dto) {
+        Diretor diretor = new Diretor(
+                dto.getNome(),
+                dto.getNacionalidade(),
+                dto.getNumeroIndicacoes(),
+                dto.isAtivo()
+        );
         return diretorService.salvar(diretor);
     }
 

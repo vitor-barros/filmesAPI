@@ -1,9 +1,10 @@
 package com.vitor.filmes_api.controller;
 
-import com.vitor.filmes_api.model.Filme;
-import com.vitor.filmes_api.service.FilmeService;
-import com.vitor.filmes_api.service.DiretorService;
+import com.vitor.filmes_api.dto.FilmeDTO;
 import com.vitor.filmes_api.model.Diretor;
+import com.vitor.filmes_api.model.Filme;
+import com.vitor.filmes_api.service.DiretorService;
+import com.vitor.filmes_api.service.FilmeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -34,42 +35,40 @@ public class FilmeController {
     }
 
     @PostMapping
-    public ResponseEntity<Filme> criar(@RequestBody Filme filme) {
-        // Verifica se o diretor existe antes de salvar o filme
-        if (filme.getDiretor() != null) {
-            Optional<Diretor> diretor = diretorService.buscarPorId(filme.getDiretor().getId());
-            if (diretor.isEmpty()) {
-                return ResponseEntity.badRequest().build();
-            }
-            filme.setDiretor(diretor.get());
-        } else {
+    public ResponseEntity<Filme> criar(@RequestBody FilmeDTO dto) {
+        Optional<Diretor> diretorOptional = diretorService.buscarPorId(dto.getDiretorId());
+
+        if (diretorOptional.isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
 
-        Filme salvo = filmeService.salvar(filme);
-        return ResponseEntity.ok(salvo);
+        Filme filme = new Filme(
+                dto.getTitulo(),
+                dto.getAnoLancamento(),
+                dto.getGenero(),
+                diretorOptional.get()
+        );
+
+        return ResponseEntity.ok(filmeService.salvar(filme));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Filme> atualizar(@PathVariable Long id, @RequestBody Filme filmeAtualizado) {
+    public ResponseEntity<Filme> atualizar(@PathVariable Long id, @RequestBody FilmeDTO dto) {
         Optional<Filme> filmeExistente = filmeService.buscarPorId(id);
 
         if (filmeExistente.isPresent()) {
             Filme filme = filmeExistente.get();
-            filme.setTitulo(filmeAtualizado.getTitulo());
-            filme.setAnoLancamento(filmeAtualizado.getAnoLancamento());
-            filme.setGenero(filmeAtualizado.getGenero());
+            filme.setTitulo(dto.getTitulo());
+            filme.setAnoLancamento(dto.getAnoLancamento());
+            filme.setGenero(dto.getGenero());
 
-            if (filmeAtualizado.getDiretor() != null) {
-                Optional<Diretor> diretor = diretorService.buscarPorId(filmeAtualizado.getDiretor().getId());
-                if (diretor.isEmpty()) {
-                    return ResponseEntity.badRequest().build();
-                }
-                filme.setDiretor(diretor.get());
+            Optional<Diretor> diretorOptional = diretorService.buscarPorId(dto.getDiretorId());
+            if (diretorOptional.isEmpty()) {
+                return ResponseEntity.badRequest().build();
             }
+            filme.setDiretor(diretorOptional.get());
 
-            Filme salvo = filmeService.salvar(filme);
-            return ResponseEntity.ok(salvo);
+            return ResponseEntity.ok(filmeService.salvar(filme));
         } else {
             return ResponseEntity.notFound().build();
         }
